@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jul  5 12:10:50 2021
+Web-scraping das datas de pagamento de juros e amortizações das debêntures do site da Anbima Datausando Selenium e Beautiful Soup
 
 @author: Marcos
 """
@@ -9,6 +9,7 @@ import time
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import pandas as pd
+from bs4 import BeautifulSoup
 
 #____________________________________________________________________________________________________
 # Funções
@@ -26,31 +27,32 @@ def get_amortizacao(i):
 
     lista_temp = [] #Lista que recebe as informações das debêntures
     
-    #time.sleep(2)
+    time.sleep(1)
     
     for i in range(last_page):
     
-        table = driver.find_element_by_class_name("table__agenda") #Localiza a tabela dentro da página
-        table_tbody = table.find_element_by_tag_name('tbody') #Localiza o tbody dentro da classe table agenda
-        table_tr = table_tbody.find_elements_by_tag_name('tr') #Localiza as tags tr dentro da tabela
-        
-        for elemento in table_tr:
-            card = {}
-            temp = elemento.text.split("\n")
-            card['Data do Evento'] = temp[0]
-            card['Data da Liquidação'] = temp[1]
-            card['Evento'] = temp[2]
-            card['Percentual/Taxa (%)'] = temp[3]
-            card['Status'] = temp[4]
-            card['Valor Pago (R$)'] = temp[5]
-                
-            lista_temp.append(card)
-        
-        time.sleep(0.5)
+        #Se ta na primeira página
+        if (i == 0):
+            table = driver.find_element_by_class_name("table__agenda") #Localiza a tabela dentro da página
+            table_tbody = table.find_element_by_tag_name('tbody') #Localiza o tbody dentro da classe table agenda
+            table_tr = table_tbody.find_elements_by_tag_name('tr') #Localiza as tags tr dentro da tabela
+            
+            for elemento in table_tr:
+                card = {}
+                temp = elemento.text.split("\n")
+                card['Data do Evento'] = temp[0]
+                card['Data da Liquidação'] = temp[1]
+                card['Evento'] = temp[2]
+                card['Percentual/Taxa (%)'] = temp[3]
+                card['Status'] = temp[4]
+                card['Valor Pago (R$)'] = temp[5]
+                    
+                lista_temp.append(card)
+            
+            time.sleep(0.5)
     
         #Passa de página
         if (i+1) > 1:
-            #print(i+1)
             input_element = driver.find_element_by_class_name("agenda-pagination") #Acessa o form de escrita
             input_element_ = input_element.find_elements_by_tag_name('input') #Acessa o bloco onde inputa o valor da página requerida
             
@@ -59,16 +61,31 @@ def get_amortizacao(i):
             input_element_[0].send_keys(i+1) #Reescreve para acessar a página desejada
             input_element_[0].send_keys(Keys.ENTER) #Aperta ENTER
             
-            #pagina_atual = driver.window_handles[0]
-            #driver.switch_to.window(pagina_atual)
-            
-            #page = driver.page_source
             time.sleep(2)
-    
             
+            page = driver.page_source #Pega o html da página
+            source = BeautifulSoup(page, 'html.parser') #Transforma numa variável BeautifulSoup
+            table = source.find(class_ = 'table__agenda')
+            table_tbody = table.tbody
+            table_tr = table_tbody.findAll('tr') 
             
+            for elemento in table_tr:
+                card = {}
+                temp = elemento.findAll('td')
+                card['Data do Evento'] = temp[0].text
+                card['Data da Liquidação'] = temp[1].text
+                card['Evento'] = temp[2].text
+                card['Percentual/Taxa (%)'] = temp[3].text
+                card['Status'] = temp[4].text
+                card['Valor Pago (R$)'] = temp[5].text
+                
+                #print(card)
+                lista_temp.append(card)
+                
+            time.sleep(0.5)
             
     return lista_temp
+
 
 #____________________________________________________________________________________________________
 # Leitura das urls
@@ -87,36 +104,26 @@ for url in range(len(urls)):
 chromedriver = r'C:/Users/Marcos/Downloads/chromedriver'
 driver = webdriver.Chrome(executable_path=chromedriver)
 
-
 lista = [] #Lista que recebe as debêntures
 
 #Iteração main
-for i in range(0, 1):
+for i in range(0, len(df)):
     try:
         temp = get_amortizacao(i)
         lista.append(temp)
+        print(df.iloc[i][0] + "- " + str(i) + "/" + str(len(df) - 1))
         
     except:
         print("erro: "+ df.iloc[i][0])
         continue
     
-#Salva a lista em um dataframe e adiciona os nome das debêntures
+#Salva a lista em um dataframe
 df1 = pd.DataFrame(lista)
-df1 = df1.shift(periods=1,axis=1)
 
-for i in range(0,len(df)-1):
-    df1[0][i] = df.iloc[i][0]
+#Altera o index para o nome da debênture
+df1 = df1.reset_index()
+for i in range(0,len(df)):
+    df1['index'][i] = df.iloc[i][0]
 
 #Exporta para o Excel
 df1.to_excel('amortizacao_deb.xlsx')
-
-
-
-
-
-
-
-
-
-
-
