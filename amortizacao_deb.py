@@ -89,7 +89,7 @@ def get_amortizacao(i):
 
 #____________________________________________________________________________________________________
 # Leitura das urls
-df = pd.read_excel('D:/2020/Data Science/Alura/web-scraping-deb/deb_url.xlsx', index_col=0)
+df = pd.read_excel('D:/2020/web-scraping-deb/deb_url.xlsx', index_col=0)
 
 urls = df.iloc[:,1]
 
