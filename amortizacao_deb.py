@@ -58,6 +58,8 @@ def get_amortizacao(i):
             
             input_element_[0].send_keys(Keys.LEFT) #Leva o cursor pra esquerda
             input_element_[0].send_keys(Keys.DELETE) #Deleta o valor atual
+            input_element_[0].send_keys(Keys.LEFT) #Leva o cursor pra esquerda
+            input_element_[0].send_keys(Keys.DELETE) #Deleta o valor atual
             input_element_[0].send_keys(i+1) #Reescreve para acessar a página desejada
             input_element_[0].send_keys(Keys.ENTER) #Aperta ENTER
             
@@ -79,7 +81,6 @@ def get_amortizacao(i):
                 card['Status'] = temp[4].text
                 card['Valor Pago (R$)'] = temp[5].text
                 
-                #print(card)
                 lista_temp.append(card)
                 
             time.sleep(0.5)
@@ -89,7 +90,7 @@ def get_amortizacao(i):
 
 #____________________________________________________________________________________________________
 # Leitura das urls
-df = pd.read_excel('D:/2020/web-scraping-deb/deb_url.xlsx', index_col=0)
+df = pd.read_excel('D:/2020/Data Science/Alura/web-scraping-deb/deb_url.xlsx', index_col=0)
 
 urls = df.iloc[:,1]
 
@@ -114,6 +115,7 @@ for i in range(0, len(df)):
         print(df.iloc[i][0] + "- " + str(i) + "/" + str(len(df) - 1))
         
     except:
+        lista.append("-")
         print("erro: "+ df.iloc[i][0])
         continue
     
